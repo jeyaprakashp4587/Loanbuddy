@@ -1,11 +1,16 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 
 const { createContext } = require("react");
 
 const ContextHook = createContext();
 
 export const ProviderContext = ({ children }) => {
-  return <ContextHook.Provider>{children}</ContextHook.Provider>;
+  const [user, setUser] = useState();
+  return (
+    <ContextHook.Provider value={{ user, setUser }}>
+      {children}
+    </ContextHook.Provider>
+  );
 };
 
 export const useData = () => {

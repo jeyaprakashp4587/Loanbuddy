@@ -1,12 +1,17 @@
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { StatusBar, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import React from "react";
 import { ProviderContext } from "./context/ContextHook";
-import { StackNavigation } from "./Navigation/Navigations";
+import Navigation from "./Navigation/Navigations";
+
 const App = () => {
   return (
     <ProviderContext>
-      <SafeAreaView>
-        <StackNavigation />
+      <SafeAreaView
+        style={{ borderWidth: 0, width: "100%", height: "100%", flex: 1 }}
+      >
+        <Navigation />
+        <StatusBar backgroundColor="white" barStyle="dark-content" />
       </SafeAreaView>
     </ProviderContext>
   );
