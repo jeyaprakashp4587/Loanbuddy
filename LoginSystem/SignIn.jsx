@@ -1,4 +1,5 @@
 import {
+  Alert,
   Dimensions,
   Image,
   StyleSheet,
@@ -6,19 +7,21 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useState, useCallback } from "react";
 import { TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
+import axios from "axios";
+import Api from "../Api";
+import { useNavigation } from "@react-navigation/native";
 
 const SignIn = () => {
   const { width, height } = Dimensions.get("window");
-
-  // useRef for storing input values
-  const storeNameRef = useRef(null);
-  const phoneNumberRef = useRef(null);
-  const passwordRef = useRef(null);
-  const confirmPasswordRef = useRef(null);
-
+  const nav = useNavigation();
+  // States to handle form inputs
+  const [storeName, setStoreName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState({
     storeName: false,
     phoneNumber: false,
@@ -36,182 +39,139 @@ const SignIn = () => {
       confirmPassword: false,
     };
 
-    // Access the ref values to perform validation
-    const storeNameValue = storeNameRef.current?.value || "";
-    const phoneNumberValue = phoneNumberRef.current?.value || "";
-    const passwordValue = passwordRef.current?.value || "";
-    const confirmPasswordValue = confirmPasswordRef.current?.value || "";
-
     // Store name validation (checking if it is empty)
-    if (storeNameValue.trim().length === 0) {
+    if (storeName.trim().length === 0) {
       newErrors.storeName = true;
       isValid = false;
     }
 
     // Phone number length validation (must be exactly 10 digits)
-    if (phoneNumberValue.length !== 10 || isNaN(phoneNumberValue)) {
+    if (phoneNumber.length !== 10 || isNaN(phoneNumber)) {
       newErrors.phoneNumber = true;
       isValid = false;
     }
 
     // Password length validation
-    if (passwordValue.length < 6) {
+    if (password.length < 6) {
       newErrors.password = true;
       isValid = false;
     }
 
     // Confirm password match validation
-    if (passwordValue !== confirmPasswordValue) {
+    if (password !== confirmPassword) {
       newErrors.confirmPassword = true;
       isValid = false;
     }
 
     setErrors(newErrors);
     return isValid;
-  });
+  }, [storeName, phoneNumber, password, confirmPassword]);
 
   // Handle SignIn button press
-  const handleSignIn = useCallback(() => {
+  const handleSignIn = useCallback(async () => {
     const isFormValid = validateForm();
     if (isFormValid) {
       // Proceed with the form submission (e.g., API call)
-      console.log("Form is valid, proceed with sign in...");
+      try {
+        const res = await axios.post(`${Api}/login/signIn`, {
+          storeName,
+          phoneNumber,
+          password,
+        });
+
+        if (res.status === 201) {
+          // Navigate to login screen after successful sign-in
+          nav.navigate("login");
+        }
+      } catch (error) {
+        if (error.response && error.response.status === 400) {
+          // Phone number already exists
+          Alert.alert("Phone number already exists");
+          console.log(error.response.data.message); // Log the error message
+        } else {
+          // Handle other errors (e.g., network issues or server errors)
+          Alert.alert("Something went wrong, please try again.");
+          console.log(error);
+        }
+      }
     } else {
-      console.log("Form is invalid, show errors.");
+      // Show validation errors
     }
-  });
+  }, [storeName, phoneNumber, password, validateForm]);
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: "white",
-        justifyContent: "center",
-        alignItems: "center",
-        paddingHorizontal: 20,
-      }}
-    >
+    <View style={styles.container}>
       <Image
         source={{ uri: "https://i.ibb.co/vVGLXYH/2395528-13972.jpg" }}
-        style={{
-          width: width * 0.6,
-          height: height * 0.09,
-          position: "absolute",
-          // zIndex: 10,
-          top: height * 0.22,
-          right: 0,
-        }}
+        style={styles.topImage(width, height)}
       />
-      <View
-        style={{
-          width: "100%",
-          padding: 20,
-          flexDirection: "column",
-          rowGap: 10,
-          backgroundColor: "white",
-          elevation: 3,
-        }}
-      >
+      <View style={styles.form}>
         <TextInput
           label="Enter Store Name"
           mode="outlined"
-          ref={storeNameRef} // Attach ref to TextInput
+          value={storeName}
+          onChangeText={setStoreName} // Manage state
           activeOutlineColor={Colors.lightGrey}
-          underlineColor={Colors.lightGrey}
-          outlineStyle={{
-            borderWidth: 1,
-            borderColor: errors.storeName ? "red" : Colors.lightGrey,
-          }}
-          style={{ backgroundColor: "white" }}
+          outlineStyle={styles.outlineStyle(errors.storeName)}
+          style={styles.inputStyle}
         />
         {errors.storeName && (
-          <Text style={{ color: "red", fontSize: 12 }}>
-            Store name is required.
-          </Text>
+          <Text style={styles.errorText}>Store name is required.</Text>
         )}
+
         <TextInput
           label="Enter Phone Number"
           mode="outlined"
-          ref={phoneNumberRef} // Attach ref to TextInput
-          keyboardType="numeric" // Ensures only numbers can be typed
+          value={phoneNumber}
+          onChangeText={setPhoneNumber} // Manage state
+          keyboardType="numeric"
           activeOutlineColor={Colors.lightGrey}
-          underlineColor={Colors.lightGrey}
-          outlineStyle={{
-            borderWidth: 1,
-            borderColor: errors.phoneNumber ? "red" : Colors.lightGrey,
-          }}
-          style={{ backgroundColor: "white" }}
+          outlineStyle={styles.outlineStyle(errors.phoneNumber)}
+          style={styles.inputStyle}
         />
         {errors.phoneNumber && (
-          <Text style={{ color: "red", fontSize: 12 }}>
+          <Text style={styles.errorText}>
             Phone number must be exactly 10 digits.
           </Text>
         )}
+
         <TextInput
           label="Create Password"
           mode="outlined"
-          ref={passwordRef} // Attach ref to TextInput
+          value={password}
+          onChangeText={setPassword} // Manage state
           secureTextEntry
           activeOutlineColor={Colors.lightGrey}
-          underlineColor={Colors.lightGrey}
-          outlineStyle={{
-            borderWidth: 1,
-            borderColor: errors.password ? "red" : Colors.lightGrey,
-          }}
-          style={{ backgroundColor: "white" }}
+          outlineStyle={styles.outlineStyle(errors.password)}
+          style={styles.inputStyle}
         />
         {errors.password && (
-          <Text style={{ color: "red", fontSize: 12 }}>
+          <Text style={styles.errorText}>
             Password must be at least 6 characters long.
           </Text>
         )}
+
         <TextInput
           label="Confirm Password"
           mode="outlined"
-          ref={confirmPasswordRef} // Attach ref to TextInput
+          value={confirmPassword}
+          onChangeText={setConfirmPassword} // Manage state
           secureTextEntry
           activeOutlineColor={Colors.lightGrey}
-          underlineColor={Colors.lightGrey}
-          outlineStyle={{
-            borderWidth: 1,
-            borderColor: errors.confirmPassword ? "red" : Colors.lightGrey,
-          }}
-          style={{ backgroundColor: "white" }}
+          outlineStyle={styles.outlineStyle(errors.confirmPassword)}
+          style={styles.inputStyle}
         />
         {errors.confirmPassword && (
-          <Text style={{ color: "red", fontSize: 12 }}>
-            Passwords do not match.
-          </Text>
+          <Text style={styles.errorText}>Passwords do not match.</Text>
         )}
-        <TouchableOpacity
-          onPress={handleSignIn}
-          style={{
-            flexDirection: "column",
-            width: "100%",
-            borderRadius: 5,
-          }}
-        >
-          <Text
-            style={{
-              backgroundColor: Colors.veryLightGrey,
-              padding: 10,
-              textAlign: "center",
-            }}
-          >
-            Sign In
-          </Text>
+
+        <TouchableOpacity onPress={handleSignIn} style={styles.signInButton}>
+          <Text style={styles.signInText}>Sign In</Text>
         </TouchableOpacity>
       </View>
       <Image
         source={{ uri: "https://i.ibb.co/vVGLXYH/2395528-13972.jpg" }}
-        style={{
-          width: width * 0.6,
-          height: height * 0.09,
-          position: "absolute",
-          zIndex: -10,
-          top: height * 0.7,
-          left: 0,
-        }}
+        style={styles.bottomImage(width, height)}
       />
     </View>
   );
@@ -219,4 +179,56 @@ const SignIn = () => {
 
 export default SignIn;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  form: {
+    width: "100%",
+    padding: 20,
+    backgroundColor: "white",
+    elevation: 3,
+    flexDirection: "column",
+    rowGap: 10,
+  },
+  inputStyle: {
+    backgroundColor: "white",
+  },
+  outlineStyle: (isError) => ({
+    borderWidth: 1,
+    borderColor: isError ? "red" : Colors.lightGrey,
+  }),
+  errorText: {
+    color: "red",
+    fontSize: 12,
+  },
+  signInButton: {
+    flexDirection: "column",
+    width: "100%",
+    borderRadius: 5,
+  },
+  signInText: {
+    backgroundColor: Colors.veryLightGrey,
+    padding: 10,
+    textAlign: "center",
+  },
+  topImage: (width, height) => ({
+    width: width * 0.6,
+    height: height * 0.09,
+    position: "absolute",
+    top: height * 0.22,
+    right: 0,
+  }),
+  bottomImage: (width, height) => ({
+    width: width * 0.6,
+    height: height * 0.09,
+    position: "absolute",
+    zIndex: -10,
+    top: height * 0.7,
+    left: 0,
+  }),
+});
