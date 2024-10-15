@@ -79,7 +79,7 @@ const SignIn = () => {
           password,
         });
 
-        if (res.status === 201) {
+        if (res.status === 200) {
           // Navigate to login screen after successful sign-in
           nav.navigate("login");
         }
