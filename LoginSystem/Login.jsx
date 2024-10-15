@@ -6,24 +6,29 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Async,
 } from "react-native";
 import React, { useState, useCallback } from "react";
-import { TextInput } from "react-native-paper";
+import { ActivityIndicator, TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import axios from "axios";
 import Api from "../Api"; // Ensure this points to your backend URL
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useData } from "@/context/ContextHook";
 
 const Login = () => {
   const { width, height } = Dimensions.get("window");
   const nav = useNavigation();
+  const { setUser } = useData();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({
     phoneNumber: false,
     password: false,
   });
+  const [actiIndi, setActiIndi] = useState(false);
 
   // Validation function
   const validateForm = useCallback(() => {
@@ -51,6 +56,7 @@ const Login = () => {
 
   // Handle Login button press
   const handleLogin = useCallback(async () => {
+    setActiIndi(true);
     const isFormValid = validateForm();
     if (isFormValid) {
       try {
@@ -60,11 +66,16 @@ const Login = () => {
         });
 
         if (res.status === 200) {
+          await AsyncStorage.setItem("userId", res.data._id);
+          if (res.data) {
+            setUser(res.data);
+          }
           // Navigate to the home screen upon successful login
           nav.navigate("tab"); // Replace "home" with the appropriate screen
         }
       } catch (error) {
         if (error.response && error.response.status === 400) {
+          setActiIndi(false);
           // Wrong phone number or password
           Alert.alert(error.response.data.message);
         } else {
@@ -134,6 +145,13 @@ const Login = () => {
       >
         Don't Have an account
       </Text>
+      {actiIndi && (
+        <ActivityIndicator
+          color={Colors.mildGrey}
+          size={40}
+          style={{ position: "absolute", bottom: height * 0.2 }}
+        />
+      )}
     </View>
   );
 };

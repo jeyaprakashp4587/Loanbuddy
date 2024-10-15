@@ -11,9 +11,15 @@ import {
   faBell,
   faHome,
   faPlus,
+  faShop,
   faSuitcase,
   faUserGroup,
 } from "@fortawesome/free-solid-svg-icons";
+import Entypo from "@expo/vector-icons/Entypo";
+import LoanUser from "../Screens/LoanUser";
+import User from "../Screens/User";
+import SplashScreen from "../Screens/SplashScreen";
+import AddMember from "../Screens/AddMember";
 
 const { width, height } = Dimensions.get("window");
 const TabNavigation = () => {
@@ -35,10 +41,9 @@ const TabNavigation = () => {
           borderTopWidth: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: width * 0.025,
           marginTop: -15,
           marginBottom: 5,
-
           color: Colors.veryDarkGrey,
           letterSpacing: 1,
         },
@@ -55,23 +60,14 @@ const TabNavigation = () => {
           ),
         }}
       />
-      <Tab.Screen
-        name="loanUsers"
-        component={Home}
-        options={{
-          headerShadow: false,
-          tabBarIcon: ({ color }) => (
-            <FontAwesomeIcon icon={faHome} color={color} size={width * 0.06} />
-          ),
-        }}
-      />
+
       <Tab.Screen
         name="user"
-        component={Home}
+        component={User}
         options={{
           headerShadow: false,
           tabBarIcon: ({ color }) => (
-            <FontAwesomeIcon icon={faHome} color={color} size={width * 0.06} />
+            <Entypo name="shop" size={24} color={color} />
           ),
         }}
       />
@@ -87,11 +83,14 @@ const Navigation = () => {
         headerShown: false,
         animation: "slide_from_right",
       }}
-      initialRouteName="tab"
+      initialRouteName="splash"
     >
+      <Stack.Screen name="splash" component={SplashScreen} />
       <Stack.Screen name="login" component={Login} />
       <Stack.Screen name="tab" component={TabNavigation} />
       <Stack.Screen name="signIn" component={SignIn} />
+      <Stack.Screen name="loanUser" component={LoanUser} />
+      <Stack.Screen name="addMember" component={AddMember} />
     </Stack.Navigator>
   );
 };
