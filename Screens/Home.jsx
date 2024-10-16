@@ -228,23 +228,23 @@ const Home = () => {
               backgroundColor: Colors.violet,
               flexDirection: "row",
               alignItems: "center",
-              padding: 10,
+              // padding: 5,
+              paddingHorizontal: 20,
               borderRadius: 10,
               justifyContent: "center",
               columnGap: 10,
             }}
           >
             <FontAwesomeIcon icon={faAdd} color="white" />
-            <Text style={{ color: "white" }}>Add New Members</Text>
           </TouchableOpacity>
         </View>
-
         {user?.LoanHolders?.length <= 0 ? (
           <Text style={{ marginTop: 20 }}>No Loan Holders</Text>
         ) : (
           <FlatList
+            style={{ marginTop: 30 }}
             data={user?.LoanHolders}
-            renderItem={({ item }) => (
+            renderItem={({ item, index }) => (
               <TouchableOpacity
                 key={index}
                 style={{
@@ -260,7 +260,11 @@ const Home = () => {
                 }}
               >
                 <Image
-                  source={{ uri: "https://i.ibb.co/TgdT1DW/pro.jpg" }}
+                  source={{
+                    uri: item?.LoanHolderProfileImg
+                      ? item?.LoanHolderProfileImg
+                      : "https://i.ibb.co/TgdT1DW/pro.jpg",
+                  }}
                   style={{
                     width: width * 0.13,
                     height: height * 0.063,
@@ -275,7 +279,7 @@ const Home = () => {
                     letterSpacing: 1,
                   }}
                 >
-                  {/* {item} */}
+                  {item?.LoanHolderName}
                 </Text>
                 <Text
                   style={{
@@ -294,13 +298,14 @@ const Home = () => {
                       letterSpacing: 1,
                     }}
                   >
-                    Rs: 200 /-
+                    Rs: {item?.LoanHolderBalance ? item?.LoanHolderBalance : 0}{" "}
+                    /-
                   </Text>
                 </Text>
               </TouchableOpacity>
             )}
           />
-        )}
+        )  searchRender && (<Text></Text>) : null }
       </ScrollView>
     </View>
   );

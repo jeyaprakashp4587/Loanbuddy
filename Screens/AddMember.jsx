@@ -100,7 +100,7 @@ const AddMember = () => {
           onChangeText={setLoanHolderName}
           activeOutlineColor={Colors.lightGrey}
           style={{ backgroundColor: "white" }}
-          outlineStyle={{ borderWidth: 1 }}
+          outlineStyle={{ borderWidth: 1, borderColor: Colors.lightGrey }}
         />
         <TextInput
           label="Enter Loan Holder Amount"
@@ -109,8 +109,10 @@ const AddMember = () => {
           onChangeText={setLoanHolderAmount}
           keyboardType="numeric"
           activeOutlineColor={Colors.lightGrey}
-          style={{ backgroundColor: "white" }}
-          outlineStyle={{ borderWidth: 1 }}
+          style={{
+            backgroundColor: "white",
+          }}
+          outlineStyle={{ borderWidth: 1, borderColor: Colors.lightGrey }}
         />
         <TouchableOpacity
           onPress={selectImage}
