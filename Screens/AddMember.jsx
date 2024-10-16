@@ -6,152 +6,238 @@ import {
   View,
   Image,
   Alert,
+  Modal,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Colors } from "@/constants/Colors";
-import { TextInput } from "react-native-paper";
+import { ActivityIndicator, TextInput } from "react-native-paper";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faCamera } from "@fortawesome/free-solid-svg-icons";
 import * as ImagePicker from "expo-image-picker";
-import { Camera } from "expo-camera";
 import axios from "axios";
 import { storage } from "../Firebase/FireBase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; // Ensure this points to your firebase config
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { LinearGradient } from "expo-linear-gradient";
+import { useData } from "@/context/ContextHook";
 import Api from "@/Api";
 
 const AddMember = () => {
-  const { width } = Dimensions.get("window");
+  const { width, height } = Dimensions.get("window");
   const [loanHolderName, setLoanHolderName] = useState("");
   const [loanHolderAmount, setLoanHolderAmount] = useState("");
-  const [image, setImage] = useState(null);
-  const [cameraPermission, setCameraPermission] = useState(null);
-  const [cameraRef, setCameraRef] = useState(null);
-  const [showCamera, setShowCamera] = useState(false); // For toggling camera view
-
-  useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setCameraPermission(status === "granted");
-    })();
+  const [image, setImage] = useState();
+  const [uploadIndi, setUploadIndi] = useState(false);
+  const [existingHolder, setExistingHolder] = useState(null); // Store existing loan holder
+  const [modalVisible, setModalVisible] = useState(false);
+  const { user } = useData();
+  const selectImage = useCallback(async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+      aspect: [4, 3],
+    });
+    if (!result.canceled) {
+      uploadImageToFirebase(result.assets[0].uri).then(() =>
+        setUploadIndi(false)
+      );
+    }
   }, []);
 
-  const openCamera = async () => {
-    setShowCamera(true); // Show the camera when this is called
-  };
-
-  const takePicture = async () => {
-    if (cameraRef) {
-      const photo = await cameraRef.takePictureAsync();
-      setImage(photo.uri);
-      setShowCamera(false); // Hide camera after taking the picture
-    }
-  };
-
-  const uploadImageToFirebase = async (uri) => {
+  const uploadImageToFirebase = useCallback(async (imageUri) => {
     try {
-      const response = await fetch(uri);
+      setUploadIndi(true);
+      const storageRef = ref(storage, "Image/" + Date.now() + ".jpeg");
+      const response = await fetch(imageUri);
       const blob = await response.blob();
-      const fileName = uri.split("/").pop();
-      const ref = storage.ref().child(`loanHolders/${fileName}`);
-      await ref.put(blob);
-      const downloadUrl = await ref.getDownloadURL();
-      return downloadUrl;
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+      setImage(downloadURL);
     } catch (error) {
-      console.error("Error uploading image to Firebase:", error);
-      return null;
+      console.error("Error uploading file:", error);
+      setUploadIndi(false);
     }
-  };
+  }, []);
 
-  const handleSubmit = async () => {
-    if (!loanHolderName || !loanHolderAmount) {
-      Alert.alert("Please fill all the fields");
+  const HandleSubmit = useCallback(async () => {
+    if (!loanHolderName) {
+      Alert.alert("Please Fill Name Field");
       return;
     }
-
     try {
-      // Upload image to Firebase
-      const imageUrl = await uploadImageToFirebase(image);
-
-      // API request to save loan holder details
       const response = await axios.post(`${Api}/LoanHolder/AddLoanHolder`, {
         loanHolderName,
         loanHolderAmount,
-        loanHolderProfileImg: imageUrl, // Image URL from Firebase
+        image,
+        id: user?._id,
       });
 
-      if (response.status === 200) {
-        Alert.alert("Loan holder details saved successfully!");
+      if (response.data.exits) {
+        setExistingHolder(response.data.exits);
+        console.log(response.data);
+        setModalVisible(true); // Show modal if loan holder exists
+      } else {
+        Alert.alert("Success", "Loan holder added successfully!");
       }
     } catch (error) {
-      console.error("Error saving loan holder details:", error);
-      Alert.alert("Failed to save loan holder details.");
+      console.error("Error saving loan holder:", error);
+      Alert.alert("Error", "Could not save loan holder.");
     }
-  };
+  }, [loanHolderName, loanHolderAmount, image]);
 
-  if (cameraPermission === null) {
-    return <Text>Requesting camera permission...</Text>;
-  }
-  if (cameraPermission === false) {
-    return <Text>No access to camera</Text>;
-  }
+  const previewImage = useMemo(() => {
+    return image ? image : "https://i.ibb.co/TgdT1DW/pro.jpg";
+  }, [image]);
 
   return (
     <View style={styles.container}>
-      {showCamera ? (
-        // Conditionally render the Camera instead of using Modal
-        <Camera style={{ flex: 1 }} ref={(ref) => setCameraRef(ref)}>
-          <View style={styles.cameraContainer}>
-            <TouchableOpacity
-              onPress={takePicture}
-              style={styles.captureButton}
-            >
-              <Text style={styles.cameraButtonText}>Capture</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setShowCamera(false)}
-              style={styles.cancelButton}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </Camera>
-      ) : (
-        // Render the normal form if camera is not active
-        <View style={styles.form}>
-          <Text style={styles.headerText}>Add Loan Holder Info</Text>
-          <TextInput
-            label="Enter Loan Holder Name"
-            mode="outlined"
-            value={loanHolderName}
-            onChangeText={setLoanHolderName}
-            activeOutlineColor={Colors.lightGrey}
-            style={{ backgroundColor: "white" }}
-            outlineStyle={{ borderWidth: 1 }}
-          />
-          <TextInput
-            label="Enter Loan Holder Amount"
-            mode="outlined"
-            value={loanHolderAmount}
-            onChangeText={setLoanHolderAmount}
-            keyboardType="numeric"
-            activeOutlineColor={Colors.lightGrey}
-            style={{ backgroundColor: "white" }}
-            outlineStyle={{ borderWidth: 1 }}
-          />
-          <TouchableOpacity onPress={openCamera} style={styles.cameraButton}>
-            <FontAwesomeIcon icon={faCamera} size={20} color="white" />
-            <Text style={styles.cameraButtonText}>Take a Photo</Text>
-          </TouchableOpacity>
+      <View style={styles.form}>
+        <Text style={styles.headerText}>Add Loan Holder Info</Text>
+        <TextInput
+          label="Enter Loan Holder Name"
+          mode="outlined"
+          value={loanHolderName}
+          onChangeText={setLoanHolderName}
+          activeOutlineColor={Colors.lightGrey}
+          style={{ backgroundColor: "white" }}
+          outlineStyle={{ borderWidth: 1 }}
+        />
+        <TextInput
+          label="Enter Loan Holder Amount"
+          mode="outlined"
+          value={loanHolderAmount}
+          onChangeText={setLoanHolderAmount}
+          keyboardType="numeric"
+          activeOutlineColor={Colors.lightGrey}
+          style={{ backgroundColor: "white" }}
+          outlineStyle={{ borderWidth: 1 }}
+        />
+        <TouchableOpacity
+          onPress={selectImage}
+          style={{
+            backgroundColor: "#3366ff",
+            padding: 10,
+            borderRadius: 5,
+            justifyContent: "center",
+            flexDirection: "row",
+            alignItems: "center",
+            columnGap: 10,
+          }}
+        >
+          <FontAwesomeIcon icon={faCamera} size={20} color="white" />
+          <Text
+            style={{
+              textAlign: "center",
+              color: "white",
+              letterSpacing: 1,
+            }}
+          >
+            Add photo
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-          {image && (
-            <Image source={{ uri: image }} style={styles.previewImage} />
+      {/* preview */}
+      <LinearGradient
+        colors={["white", "white", "#3366cc"]}
+        start={[0, 1]}
+        end={[1, 0]}
+        style={{
+          width: "100%",
+          height: height * 0.3,
+          marginTop: 50,
+          // borderWidth: 1,
+          elevation: 2,
+          flexDirection: "row",
+          justifyContent: "space-between",
+        }}
+      >
+        <View
+          style={{
+            // borderWidth: 1,
+            flex: 1,
+            justifyContent: "center",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          {uploadIndi ? (
+            <ActivityIndicator color="black" size={40} />
+          ) : (
+            <Image
+              source={{ uri: previewImage }}
+              style={{ width: 70, height: 70, borderRadius: 50 }}
+            />
           )}
+        </View>
+        <View
+          style={{
+            // borderWidth: 1,
+            flex: 1.5,
+            flexDirection: "column",
+            justifyContent: "center",
+            // alignItems: "center",
+            padding: 20,
+            rowGap: 5,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: width * 0.04,
+              color: Colors.veryDarkGrey,
+              fontWeight: "600",
+              letterSpacing: 1,
+            }}
+          >
+            {loanHolderName || "Loan Holder Name"}
+          </Text>
+          <Text
+            style={{
+              fontSize: width * 0.04,
+              color: Colors.veryDarkGrey,
+              fontWeight: "600",
+              letterSpacing: 1,
+            }}
+          >
+            {loanHolderAmount || "Loan Holder Amount"}
+          </Text>
+        </View>
+      </LinearGradient>
+      <TouchableOpacity
+        onPress={HandleSubmit}
+        style={{
+          backgroundColor: "#3366ff",
+          padding: 10,
+          borderRadius: 5,
+          justifyContent: "center",
+          flexDirection: "row",
+          alignItems: "center",
+          columnGap: 10,
+          marginTop: 20,
+        }}
+      >
+        <Text style={{ color: "white", letterSpacing: 1 }}>Submit</Text>
+      </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
-            <Text style={styles.submitButtonText}>Submit</Text>
+      {/* Modal for existing loan holder */}
+      <Modal visible={modalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Loan holder already exists!</Text>
+          <Text style={styles.modalText}>
+            Name: {existingHolder?.LoanHolderName}
+          </Text>
+          <Image
+            source={{ uri: existingHolder?.LoanHolderProfile || previewImage }}
+            style={{ width: 70, height: 70, borderRadius: 50 }}
+          />
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setModalVisible(false)}
+          >
+            <Text style={{ color: "white" }}>Close</Text>
           </TouchableOpacity>
         </View>
-      )}
+      </Modal>
     </View>
   );
 };
@@ -159,13 +245,14 @@ const AddMember = () => {
 export default AddMember;
 
 const styles = StyleSheet.create({
+  // Add your styles here
+  // ...
   container: {
     flex: 1,
     paddingHorizontal: 20,
     backgroundColor: "white",
   },
   form: {
-    flex: 1,
     flexDirection: "column",
     rowGap: 20,
     marginTop: 50,
@@ -176,57 +263,23 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginTop: 10,
   },
-  cameraButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.violet,
-    padding: 10,
-  },
-  cameraButtonText: {
-    color: "white",
-    marginLeft: 10,
-  },
-  previewImage: {
-    width: 100,
-    height: 100,
-    marginTop: 20,
-  },
-  cameraContainer: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "transparent",
-    flexDirection: "row",
-    paddingBottom: 20,
-  },
-  captureButton: {
-    flex: 0.1,
-    alignSelf: "center",
-    alignItems: "center",
-    backgroundColor: Colors.violet,
-    padding: 10,
-    borderRadius: 5,
-    marginRight: 20,
-  },
-  cancelButton: {
-    flex: 0.1,
-    alignSelf: "center",
-    alignItems: "center",
-    backgroundColor: Colors.red,
-    padding: 10,
-    borderRadius: 5,
-  },
-  cancelButtonText: {
-    color: "white",
-  },
-  submitButton: {
-    backgroundColor: Colors.violet,
-    padding: 10,
+  modalView: {
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    elevation: 5,
   },
-  submitButtonText: {
-    color: "white",
+  modalText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  closeButton: {
+    backgroundColor: "#3366ff",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
   },
 });

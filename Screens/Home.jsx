@@ -220,7 +220,7 @@ const Home = () => {
               marginVertical: 10,
             }}
           >
-            All Loan Members
+            All Loan Member
           </Text>
           <TouchableOpacity
             onPress={() => nav.navigate("addMember")}
