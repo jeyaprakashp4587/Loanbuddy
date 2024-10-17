@@ -4,11 +4,11 @@
     "slug": "LoanBuddy",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "https://i.ibb.co/zb7trJX/Money.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "https://i.ibb.co/zb7trJX/Money.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,18 +17,26 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "https://i.ibb.co/zb7trJX/Money.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.jeyaprakash4587.LoanBuddy"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "https://i.ibb.co/zb7trJX/Money.png"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router"
+    ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e59a6b74-7d29-4e5a-950e-35acccecd7f9"
+      }
     }
   }
 }

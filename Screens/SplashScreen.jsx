@@ -1,4 +1,4 @@
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { Dimensions, Image, StyleSheet, Text, View } from "react-native";
 import React, { useEffect } from "react";
 import { ActivityIndicator } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
@@ -7,11 +7,27 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import Api from "@/Api";
 import { useData } from "@/context/ContextHook";
-
+import * as Updates from "expo-updates";
 const SplashScreen = () => {
   const { width, height } = Dimensions.get("window");
   const nav = useNavigation();
   const { setUser } = useData();
+  async function onFetchUpdateAsync() {
+    try {
+      const update = await Updates.checkForUpdateAsync();
+
+      if (update.isAvailable) {
+        await Updates.fetchUpdateAsync();
+        await Updates.reloadAsync();
+      }
+    } catch (error) {
+      // You can also add an alert() to see the error message in case of an error when fetching updates.
+      alert(`Error fetching latest Expo update: ${error}`);
+    }
+  }
+  useEffect(() => {
+    onFetchUpdateAsync();
+  }, []);
   useEffect(() => {
     AsyncStorage.getItem("userId").then(async (data) => {
       if (data) {
@@ -37,9 +53,13 @@ const SplashScreen = () => {
       }}
     >
       <View style={{ flexDirection: "column", rowGap: 50 }}>
-        <Text style={{ fontWeight: "700", fontSize: width * 0.1 }}>
+        {/* <Text style={{ fontWeight: "700", fontSize: width * 0.1 }}>
           Loan Buddy.
-        </Text>
+        </Text> */}
+        <Image
+          source={{ uri: "https://i.ibb.co/zb7trJX/Money.png" }}
+          style={{ width: width * 0.4, height: height * 0.4 }}
+        />
         <ActivityIndicator
           animating={true}
           size={40}

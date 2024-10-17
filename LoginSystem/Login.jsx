@@ -83,6 +83,8 @@ const Login = () => {
           console.log(error);
         }
       }
+    } else {
+      setActiIndi(false);
     }
   }, [phoneNumber, password, validateForm]);
 
@@ -103,6 +105,7 @@ const Login = () => {
           activeOutlineColor={Colors.lightGrey}
           outlineStyle={styles.outlineStyle(errors.phoneNumber)}
           style={styles.inputStyle}
+          placeholder="9025167345"
         />
         {errors.phoneNumber && (
           <Text style={styles.errorText}>
@@ -127,6 +130,7 @@ const Login = () => {
         )}
 
         <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
+          {actiIndi && <ActivityIndicator color={Colors.mildGrey} size={15} />}
           <Text style={styles.loginText}>Login</Text>
         </TouchableOpacity>
       </View>
@@ -143,15 +147,8 @@ const Login = () => {
           marginTop: 10,
         }}
       >
-        Don't Have an account
+        Create an account
       </Text>
-      {actiIndi && (
-        <ActivityIndicator
-          color={Colors.mildGrey}
-          size={40}
-          style={{ position: "absolute", bottom: height * 0.2 }}
-        />
-      )}
     </View>
   );
 };
@@ -186,12 +183,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   loginButton: {
-    flexDirection: "column",
+    flexDirection: "row",
     width: "100%",
+    justifyContent: "center",
     borderRadius: 5,
+    alignItems: "center",
+    backgroundColor: Colors.veryLightGrey,
   },
   loginText: {
-    backgroundColor: Colors.veryLightGrey,
     padding: 10,
     textAlign: "center",
   },

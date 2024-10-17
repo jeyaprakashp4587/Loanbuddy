@@ -33,7 +33,7 @@ const TabNavigation = () => {
         tabBarIconStyle: {
           color: Colors.lightGrey,
         },
-        tabBarActiveTintColor: "#3385ff",
+        tabBarActiveTintColor: "#004080",
         tabBarInactiveTintColor: Colors.lightGrey,
         tabBarStyle: {
           height: height * 0.1,

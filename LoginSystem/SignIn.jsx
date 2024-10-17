@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import React, { useState, useCallback } from "react";
-import { TextInput } from "react-native-paper";
+import { ActivityIndicator, TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import axios from "axios";
 import Api from "../Api";
@@ -18,6 +18,7 @@ const SignIn = () => {
   const { width, height } = Dimensions.get("window");
   const nav = useNavigation();
   // States to handle form inputs
+  const [actiIndi, setActiIndi] = useState(false);
   const [storeName, setStoreName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
@@ -72,6 +73,7 @@ const SignIn = () => {
     const isFormValid = validateForm();
     if (isFormValid) {
       // Proceed with the form submission (e.g., API call)
+      setActiIndi(true);
       try {
         const res = await axios.post(`${Api}/login/signIn`, {
           storeName,
@@ -82,19 +84,23 @@ const SignIn = () => {
         if (res.status === 200) {
           // Navigate to login screen after successful sign-in
           nav.navigate("login");
+          setActiIndi(false);
         }
       } catch (error) {
         if (error.response && error.response.status === 400) {
           // Phone number already exists
           Alert.alert("Phone number already exists");
+          setActiIndi(false);
           console.log(error.response.data.message); // Log the error message
         } else {
+          setActiIndi(false);
           // Handle other errors (e.g., network issues or server errors)
           Alert.alert("Something went wrong, please try again.");
           console.log(error);
         }
       }
     } else {
+      setActiIndi(false);
       // Show validation errors
     }
   }, [storeName, phoneNumber, password, validateForm]);
@@ -166,8 +172,15 @@ const SignIn = () => {
         )}
 
         <TouchableOpacity onPress={handleSignIn} style={styles.signInButton}>
+          {actiIndi && <ActivityIndicator color={Colors.mildGrey} size={15} />}
           <Text style={styles.signInText}>Sign In</Text>
         </TouchableOpacity>
+        <Text
+          style={{ color: Colors.violet, letterSpacing: 1 }}
+          onPress={() => nav.navigate("login")}
+        >
+          Go to Login
+        </Text>
       </View>
       <Image
         source={{ uri: "https://i.ibb.co/vVGLXYH/2395528-13972.jpg" }}
@@ -207,9 +220,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   signInButton: {
-    flexDirection: "column",
+    flexDirection: "row",
     width: "100%",
     borderRadius: 5,
+    alignItems: "center",
+    columnGap: 5,
   },
   signInText: {
     backgroundColor: Colors.veryLightGrey,

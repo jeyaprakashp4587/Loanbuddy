@@ -1,6 +1,6 @@
 import { StatusBar, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import React from "react";
+import React, { useEffect } from "react";
 import { ProviderContext } from "./context/ContextHook";
 import Navigation from "./Navigation/Navigations";
 

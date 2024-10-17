@@ -29,7 +29,8 @@ const AddMember = () => {
   const [uploadIndi, setUploadIndi] = useState(false);
   const [existingHolder, setExistingHolder] = useState(null); // Store existing loan holder
   const [modalVisible, setModalVisible] = useState(false);
-  const { user } = useData();
+  const { user, setUser } = useData();
+  const [actiIndi, setActiIndi] = useState(false);
   const selectImage = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -64,6 +65,7 @@ const AddMember = () => {
       Alert.alert("Please Fill Name Field");
       return;
     }
+    setActiIndi(true);
     try {
       const response = await axios.post(`${Api}/LoanHolder/AddLoanHolder`, {
         loanHolderName,
@@ -72,16 +74,27 @@ const AddMember = () => {
         id: user?._id,
       });
 
-      if (response.data.exits) {
+      if (response.data.exists) {
         setExistingHolder(response.data.exits);
         console.log(response.data);
-        setModalVisible(true); // Show modal if loan holder exists
+        setModalVisible(true);
+        setActiIndi(false);
+        setImage("");
+        setLoanHolderAmount(0);
+        setLoanHolderName("");
+        // Show modal if loan holder exists
       } else {
+        setUser(response.data.user);
         Alert.alert("Success", "Loan holder added successfully!");
+        setActiIndi(false);
+        setImage("");
+        setLoanHolderAmount(0);
+        setLoanHolderName("");
       }
     } catch (error) {
       console.error("Error saving loan holder:", error);
       Alert.alert("Error", "Could not save loan holder.");
+      setActiIndi(false);
     }
   }, [loanHolderName, loanHolderAmount, image]);
 
@@ -91,8 +104,8 @@ const AddMember = () => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.headerText}>Add Loan Holder Info</Text>
       <View style={styles.form}>
-        <Text style={styles.headerText}>Add Loan Holder Info</Text>
         <TextInput
           label="Enter Loan Holder Name"
           mode="outlined"
@@ -117,7 +130,7 @@ const AddMember = () => {
         <TouchableOpacity
           onPress={selectImage}
           style={{
-            backgroundColor: "#3366ff",
+            backgroundColor: "#004080",
             padding: 10,
             borderRadius: 5,
             justifyContent: "center",
@@ -141,7 +154,7 @@ const AddMember = () => {
 
       {/* preview */}
       <LinearGradient
-        colors={["white", "white", "#3366cc"]}
+        colors={["white", "white", "#004080"]}
         start={[0, 1]}
         end={[1, 0]}
         style={{
@@ -208,7 +221,7 @@ const AddMember = () => {
       <TouchableOpacity
         onPress={HandleSubmit}
         style={{
-          backgroundColor: "#3366ff",
+          backgroundColor: "#004080",
           padding: 10,
           borderRadius: 5,
           justifyContent: "center",
@@ -218,6 +231,7 @@ const AddMember = () => {
           marginTop: 20,
         }}
       >
+        {actiIndi && <ActivityIndicator color={Colors.mildGrey} size={15} />}
         <Text style={{ color: "white", letterSpacing: 1 }}>Submit</Text>
       </TouchableOpacity>
 
@@ -244,7 +258,7 @@ const AddMember = () => {
   );
 };
 
-export default AddMember;
+export default React.memo(AddMember);
 
 const styles = StyleSheet.create({
   // Add your styles here
@@ -279,7 +293,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   closeButton: {
-    backgroundColor: "#3366ff",
+    backgroundColor: "#004080",
     padding: 10,
     borderRadius: 5,
     marginTop: 10,

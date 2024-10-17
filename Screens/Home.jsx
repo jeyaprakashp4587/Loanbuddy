@@ -10,16 +10,13 @@ import {
   ActivityIndicator,
   Modal,
   FlatList,
+  RefreshControl,
+  ImageBackground,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Colors } from "@/constants/Colors";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import {
-  faAdd,
-  faMoneyBill,
-  faRupee,
-  faSearch,
-} from "@fortawesome/free-solid-svg-icons";
+import { faAdd, faSearch, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { useData } from "@/context/ContextHook";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
@@ -32,21 +29,28 @@ import {
 } from "firebase/storage"; // Import Firebase methods
 import axios from "axios";
 import Api from "@/Api";
+import debounce from "lodash.debounce"; // Import lodash debounce
 
 const { width, height } = Dimensions.get("window");
 
 const Home = () => {
-  const { user, setUser } = useData();
+  const { user, setUser, selectedLoanHolder, setSelectedLoanHolder } =
+    useData();
   const nav = useNavigation();
   const [showImageAsk, setShowImageAsk] = useState(false);
   const [uploading, setUploading] = useState(false); // State for loading indicator
+  const [searchQuery, setSearchQuery] = useState(""); // State for search query
+  const [filteredUsers, setFilteredUsers] = useState([]); // State for filtered users
 
   useEffect(() => {
-    if (!user?.storeImg) {
-      setShowImageAsk(true);
-    }
+    setTimeout(() => {
+      if (!user?.storeImg) {
+        setShowImageAsk(true);
+      }
+    }, 1000);
   }, [user]);
 
+  // Handle image upload
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -71,7 +75,6 @@ const Home = () => {
         cacheControl: "public,max-age=31536000",
       });
       const downloadURL = await getDownloadURL(storageRef);
-      // console.log(downloadURL);
       const res = await axios.post(`${Api}/user/updateStoreImage`, {
         id: user?._id,
         Image: downloadURL,
@@ -87,8 +90,53 @@ const Home = () => {
     }
   };
 
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce((query) => {
+      if (query) {
+        const filtered = user?.LoanHolders?.filter((holder) =>
+          holder.LoanHolderName.toLowerCase().includes(query.toLowerCase())
+        );
+        setFilteredUsers(filtered);
+      } else {
+        setFilteredUsers([]);
+      }
+    }, 500), // 500ms debounce delay
+    [user?.LoanHolders]
+  );
+
+  // Update searchQuery and trigger debounced search
+  const handleSearchChange = (text) => {
+    setSearchQuery(text);
+    debouncedSearch(text);
+  };
+  // refresh user
+  const [refresh, setRefresh] = useState(false);
+  const refreshUser = useCallback(async () => {
+    setRefresh(true);
+    const res = await axios.get(`${Api}/login/valid/${user?._id}`);
+    if (res.data) {
+      setRefresh(false);
+      setUser(res.data);
+    }
+  }, [user]);
+  //
+  //nav and setLoanUSer
+  const handleSetLoanUser = useCallback(
+    async (item) => {
+      setSelectedLoanHolder(item);
+      nav.navigate("loanUser");
+    },
+    [setSelectedLoanHolder]
+  );
   return (
-    <View style={{ backgroundColor: "white", flex: 1, paddingHorizontal: 20 }}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refresh} onRefresh={refreshUser} />
+      }
+      style={{ flex: 1, paddingHorizontal: 20, backgroundColor: "white" }}
+    >
       {/* header */}
       <View
         style={{
@@ -135,31 +183,23 @@ const Home = () => {
           transparent={true}
           visible={showImageAsk}
           onRequestClose={() => setShowImageAsk(false)}
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            flex: 1,
-            alignItems: "center",
-            borderWidth: 1,
-            backgroundColor: "red",
-          }}
         >
           <View
             style={{
               backgroundColor: "white",
               width: "100%",
               height: "40%",
-              borderWidth: 1,
-              position: "absolute",
-              // left: width * 0.08,
-              // top: height * 0.2,
               padding: 20,
               bottom: 0,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
-              rowGap: 10,
+              flexDirection: "column",
+              rowGap: 20,
             }}
           >
+            <TouchableOpacity onPress={() => setShowImageAsk(false)}>
+              <FontAwesomeIcon icon={faTimes} />
+            </TouchableOpacity>
             <Text style={{ fontSize: width * 0.04, letterSpacing: 1 }}>
               Upload Store Image:
             </Text>
@@ -179,6 +219,7 @@ const Home = () => {
           </View>
         </Modal>
       )}
+
       {/* search holder */}
       <View
         style={{
@@ -194,6 +235,8 @@ const Home = () => {
         <FontAwesomeIcon icon={faSearch} size={20} color={Colors.lightGrey} />
         <TextInput
           placeholder="Search Loan Holders"
+          value={searchQuery}
+          onChangeText={handleSearchChange}
           style={{
             borderWidth: 0,
             paddingHorizontal: 5,
@@ -210,6 +253,7 @@ const Home = () => {
             flexDirection: "row",
             justifyContent: "space-between",
             flexWrap: "wrap",
+            alignItems: "center",
           }}
         >
           <Text
@@ -220,43 +264,44 @@ const Home = () => {
               marginVertical: 10,
             }}
           >
-            All Loan Member
+            All Loan Members
           </Text>
           <TouchableOpacity
             onPress={() => nav.navigate("addMember")}
             style={{
-              backgroundColor: Colors.violet,
+              backgroundColor: "#004080",
               flexDirection: "row",
               alignItems: "center",
-              // padding: 5,
-              paddingHorizontal: 20,
+              // paddingHorizontal: 20,
               borderRadius: 10,
               justifyContent: "center",
               columnGap: 10,
+              width: width * 0.11,
+              height: height * 0.05,
             }}
           >
             <FontAwesomeIcon icon={faAdd} color="white" />
           </TouchableOpacity>
         </View>
-        {user?.LoanHolders?.length <= 0 ? (
-          <Text style={{ marginTop: 20 }}>No Loan Holders</Text>
-        ) : (
+        {user?.LoanHolders?.length > 0 ? (
           <FlatList
+            showsVerticalScrollIndicator={false}
             style={{ marginTop: 30 }}
-            data={user?.LoanHolders}
+            data={searchQuery.length > 0 ? filteredUsers : user?.LoanHolders}
             renderItem={({ item, index }) => (
               <TouchableOpacity
+                onPress={() => handleSetLoanUser(item)}
                 key={index}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
                   columnGap: 15,
                   backgroundColor: "white",
-                  elevation: 3,
+                  elevation: 2,
                   margin: 3,
                   padding: 10,
                   borderRadius: 10,
-                  marginBottom: 10,
+                  marginBottom: 15,
                 }}
               >
                 <Image
@@ -288,29 +333,29 @@ const Home = () => {
                     color: Colors.lightGrey,
                   }}
                 >
-                  Balance
+                  Balance{" "}
                   <Text
                     style={{
                       marginHorizontal: 10,
-                      color: "orange",
-                      fontWeight: 600,
-                      fontSize: width * 0.04,
+                      color: "#004080",
+                      fontSize: width * 0.032,
                       letterSpacing: 1,
+                      fontWeight: "600",
                     }}
                   >
-                    Rs: {item?.LoanHolderBalance ? item?.LoanHolderBalance : 0}{" "}
-                    /-
+                    RS:{item?.LoanHolderBalance ? item?.LoanHolderBalance : 0}/-
                   </Text>
                 </Text>
               </TouchableOpacity>
             )}
+            keyExtractor={(item, index) => index.toString()}
           />
-        )  searchRender && (<Text></Text>) : null }
+        ) : (
+          <Text>No Loan Holders</Text>
+        )}
       </ScrollView>
-    </View>
+    </ScrollView>
   );
 };
 
 export default Home;
-
-const styles = StyleSheet.create({});

@@ -4,9 +4,12 @@ const ContextHook = createContext();
 
 export const ProviderContext = ({ children }) => {
   const [user, setUser] = useState(null); // Default to null instead of undefined
+  const [selectedLoanHolder, setSelectedLoanHolder] = useState(null);
 
   return (
-    <ContextHook.Provider value={{ user, setUser }}>
+    <ContextHook.Provider
+      value={{ user, setUser, selectedLoanHolder, setSelectedLoanHolder }}
+    >
       {children}
     </ContextHook.Provider>
   );
