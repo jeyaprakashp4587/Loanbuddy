@@ -26,7 +26,7 @@ const SplashScreen = () => {
     }
   }
   useEffect(() => {
-    onFetchUpdateAsync();
+    // onFetchUpdateAsync();
   }, []);
   useEffect(() => {
     AsyncStorage.getItem("userId").then(async (data) => {

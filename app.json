@@ -12,6 +12,10 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/e59a6b74-7d29-4e5a-950e-35acccecd7f9"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -19,6 +23,9 @@
       "adaptiveIcon": {
         "foregroundImage": "https://i.ibb.co/zb7trJX/Money.png",
         "backgroundColor": "#ffffff"
+      },
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-5279425172548399~3958015823"
       },
       "package": "com.jeyaprakash4587.LoanBuddy"
     },
@@ -35,7 +42,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "e59a6b74-7d29-4e5a-950e-35acccecd7f9"
+        "projectId": "137ddbf8-3bee-4616-b0ae-452242542471"
       }
     }
   }

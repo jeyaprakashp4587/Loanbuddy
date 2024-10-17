@@ -20,6 +20,7 @@ import LoanUser from "../Screens/LoanUser";
 import User from "../Screens/User";
 import SplashScreen from "../Screens/SplashScreen";
 import AddMember from "../Screens/AddMember";
+import Add from "../Screens/Add";
 
 const { width, height } = Dimensions.get("window");
 const TabNavigation = () => {
@@ -83,7 +84,7 @@ const Navigation = () => {
         headerShown: false,
         animation: "slide_from_right",
       }}
-      initialRouteName="splash"
+      initialRouteName="add"
     >
       <Stack.Screen name="splash" component={SplashScreen} />
       <Stack.Screen name="login" component={Login} />
@@ -91,6 +92,7 @@ const Navigation = () => {
       <Stack.Screen name="signIn" component={SignIn} />
       <Stack.Screen name="loanUser" component={LoanUser} />
       <Stack.Screen name="addMember" component={AddMember} />
+      <Stack.Screen name="add" component={Add} />
     </Stack.Navigator>
   );
 };

@@ -30,7 +30,7 @@ import {
 import axios from "axios";
 import Api from "@/Api";
 import debounce from "lodash.debounce"; // Import lodash debounce
-
+import { Divider } from "react-native-paper";
 const { width, height } = Dimensions.get("window");
 
 const Home = () => {
@@ -245,7 +245,11 @@ const Home = () => {
           }}
         />
       </View>
-
+      {/* <AdMobBanner
+        bannerAdUnitID="ca-app-pub-5279425172548399/1607184655" // Your Banner Ad Unit ID
+        servePersonalizedAds // Set this to true to serve personalized ads
+        onDidFailToReceiveAdWithError={(error) => console.error(error)} // Handle ad loading errors
+      /> */}
       {/* loan members */}
       <ScrollView style={{ borderWidth: 0, marginTop: 20 }}>
         <View
