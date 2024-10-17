@@ -255,6 +255,21 @@ const LoanUser = () => {
             marginTop: 10,
           }}
         >
+           <TouchableOpacity
+            onPress={handleSubtractBalance}
+            style={{
+              backgroundColor: "black",
+              flex: 1,
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: 10,
+              borderRadius: 5,
+            }}
+          >
+            <Text style={{ color: "white" }}>Balance</Text>
+            <FontAwesomeIcon icon={faMinus} color="white" />
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={handleAddBalance}
             style={{
@@ -272,21 +287,7 @@ const LoanUser = () => {
             <Text style={{ color: "black" }}>Balance</Text>
             <FontAwesomeIcon icon={faPlus} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleSubtractBalance}
-            style={{
-              backgroundColor: "black",
-              flex: 1,
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-              padding: 10,
-              borderRadius: 5,
-            }}
-          >
-            <Text style={{ color: "white" }}>Balance</Text>
-            <FontAwesomeIcon icon={faMinus} color="white" />
-          </TouchableOpacity>
+         
         </View>
       </View>
       {/* history */}
