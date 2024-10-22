@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useEffect } from "react";
 import { ProviderContext } from "./context/ContextHook";
 import Navigation from "./Navigation/Navigations";
-
+// handle over
 const App = () => {
   return (
     <ProviderContext>
